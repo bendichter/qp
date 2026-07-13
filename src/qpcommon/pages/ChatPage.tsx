@@ -232,12 +232,17 @@ const ChatPage: FunctionComponent<ChatPageProps> = ({
   );
 
   const handleNewChat = useCallback(() => {
-    if (chatId) {
+    if (chatIdProp) {
+      // Viewing a saved chat at /chat/:id — switch to the fresh /chat route.
+      // The path changes, so ChatPage remounts under key="new-chat".
       navigate(`/chat${location.search}`, { replace: true });
     } else {
+      // Already on the /chat route (new-chat mode). When the first message
+      // creates the chat, its id is kept in local state (newChatId) and the URL
+      // stays /chat, so navigating here would be a no-op. Reset in place.
       clearChat();
     }
-  }, [navigate, location.search, chatId, clearChat]);
+  }, [navigate, location.search, chatIdProp, clearChat]);
 
   const handleDownloadTranscript = useCallback(() => {
     if (!chat || chat.messages.length === 0) return;
