@@ -1,5 +1,13 @@
 export const AVAILABLE_MODELS = [
   {
+    model: "deepseek/deepseek-v4-pro",
+    label: "deepseek-v4-pro",
+    cost: {
+      prompt: 0.435,
+      completion: 0.87,
+    },
+  },
+  {
     model: "openai/gpt-5-nano",
     label: "gpt-5-nano",
     cost: {
