@@ -120,9 +120,17 @@ Provide such a link whenever you refer to a file.
 
 # Neurodata objects
 
-To get the neurodata objects within a NWB file, you can use the following script:
+The NWB file objects returned by `dandiset.nwbFiles` are directly inspectable: each one exposes its neurodata objects through the `.neurodataObjects` property. There is NO separate step to load or open a file first, and there is no `getNwbFile`, `loadNwbFile`, or `openNwbFile` method — do not call one. Just read `.neurodataObjects` on the file object you already have from `dandiset.nwbFiles`.
 
-const objects = nwbFile.neurodataObjects;
+So to inspect the neurodata objects of the files in a dandiset:
+
+const nwbFiles = dandiset.nwbFiles;
+for (const f of nwbFiles) {
+  const objects = f.neurodataObjects;
+  for (const o of objects) {
+    // e.g. o.neurodataType, o.path, o.description
+  }
+}
 
 Each neurodata object will have the following fields:
 - o.path: The path to the neurodata object within the NWB file.
@@ -218,6 +226,43 @@ if (foundDandisets.length > 0) {
 Then when you are replying you would start by describing how you performed the search. Then you would list the dandisets that matched with links and titles. If there are more than 20 results, you would indicate that there are more results and suggest the user refine their search.
 
 If the user follows up with "select only those where there are at least 3 participants", then resubmit the entire script except make a list of all the unique subject IDs and check that the length of that list is at least 3.
+
+Prompt: Find starred dandisets with Units and ElectricalSeries data
+
+Script:
+
+const dandisets = await interface.getDandisets();
+const starred = dandisets.filter(d => d.star_count > 0);
+let found = [];
+for (const dandiset of starred) {
+  let hasUnits = false;
+  let hasElectricalSeries = false;
+  // The elements of dandiset.nwbFiles are the file objects themselves;
+  // read .neurodataObjects on each one directly (no separate load step).
+  for (const f of dandiset.nwbFiles) {
+    for (const o of f.neurodataObjects) {
+      const t = (o.neurodataType || '').toLowerCase();
+      if (t === 'units') hasUnits = true;
+      else if (t === 'electricalseries') hasElectricalSeries = true;
+    }
+    if (hasUnits && hasElectricalSeries) break;
+  }
+  if (hasUnits && hasElectricalSeries) found.push(dandiset);
+}
+
+if (found.length > 0) {
+  let numPrinted = 0;
+  for (const dandiset of found) {
+    interface.print(`- [${dandiset.dandiset_id}](https://dandiarchive.org/dandiset/${dandiset.dandiset_id}/${dandiset.version}) ${dandiset.name}`);
+    numPrinted++;
+    if (numPrinted >= 20) {
+      interface.print('... and more. Please refine your search for better results.');
+      break;
+    }
+  }
+} else {
+  interface.print('No starred dandisets found with both Units and ElectricalSeries data.');
+}
 
 # Get all OpenNeuro datasets
 
