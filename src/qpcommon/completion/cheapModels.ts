@@ -6,5 +6,5 @@ export const CHEAP_MODELS = [
   "google/gemini-2.5-flash",
   "openai/gpt-4.1-mini",
   "google/gemini-3-flash-preview",
-  "google/gemini-3-flash-preview"
+  "deepseek/deepseek-v4-flash-0731"
 ];
