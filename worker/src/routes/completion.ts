@@ -24,7 +24,8 @@ const CHEAP_MODELS = [
   "openai/gpt-oss-120b", // Cerebras - ultra-fast inference (2700+ tok/s)
   "qwen/qwen3-235b-a22b-2507", // Cerebras - fast open model
   "moonshotai/kimi-k2-thinking",
-  "google/gemini-3-flash-preview"
+  "google/gemini-3-flash-preview",
+  "deepseek/deepseek-v4-flash-0731" // $0.09/$0.18 per M tokens
 ];
 
 const PHRASES_TO_CHECK = [
