@@ -11,10 +11,10 @@ This document describes the security hardening measures implemented for the QP W
 - **Privacy**: IP addresses are hashed (SHA-256) before storage
 
 ### 2. Request Size Validation
-- **Completion requests**: Max 500 KB
+- **Completion requests**: Max 2 MB
 - **Chat operations**: Max 10 MB (to support images)
 - **Messages per completion**: Max 50 messages
-- **Characters per message**: Max 100,000 characters
+- **Characters per message**: Max 400,000 characters
 - **Chat storage size**: Max 10 MB per chat
 
 ### 3. Chat Limits
@@ -146,10 +146,10 @@ To modify size limits, edit `worker/src/utils/sizeValidation.ts`:
 
 ```typescript
 export const SIZE_LIMITS = {
-  defaultRequest: 500 * 1024,      // Adjust as needed
+  defaultRequest: 2 * 1024 * 1024, // Adjust as needed
   chatRequest: 10 * 1024 * 1024,   // Adjust as needed
   maxMessagesPerCompletion: 50,    // Adjust as needed
-  maxCharsPerMessage: 100000,      // Adjust as needed
+  maxCharsPerMessage: 400000,      // Adjust as needed
   maxChatStorageSize: 10 * 1024 * 1024, // Adjust as needed
 };
 ```

@@ -5,14 +5,14 @@ import { CompletionRequest, Chat } from '../types';
 // Size limits in bytes
 export const SIZE_LIMITS = {
   // Default request body size (for most requests)
-  defaultRequest: 500 * 1024, // 500 KB
-  
+  defaultRequest: 2 * 1024 * 1024, // 2 MB
+
   // Chat operations (can include images)
   chatRequest: 10 * 1024 * 1024, // 10 MB
-  
+
   // Message limits
   maxMessagesPerCompletion: 50,
-  maxCharsPerMessage: 100000,
+  maxCharsPerMessage: 400000,
   
   // Storage limits
   maxChatStorageSize: 10 * 1024 * 1024, // 10 MB
