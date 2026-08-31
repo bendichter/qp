@@ -607,9 +607,6 @@ const ChatPage: FunctionComponent<ChatPageProps> = ({
                   <div className="partial-response">Thinking...</div>
                 </div>
               )}
-
-              {/* Put empty space at the bottom so last message can scroll to top of visible area */}
-              <div style={{ height: "1200px" }}></div>
             </>
           )}
         </div>
