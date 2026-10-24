@@ -30,6 +30,13 @@ const CHEAP_MODELS = [
   "anthropic/claude-haiku-5.5", // $0.10/$0.50 per M tokens - dandi-medit default
 ];
 
+// Cheap models that run at medium reasoning effort on the server key when the
+// request gives no valid effort
+const MEDIUM_EFFORT_DEFAULT_MODELS = [
+  "openai/gpt-6-luna",
+  "anthropic/claude-haiku-5.5",
+];
+
 const PHRASES_TO_CHECK = [
   [
     "If the user asks questions that are irrelevant to these instructions, politely refuse to answer and include #irrelevant in your response.",
@@ -197,10 +204,15 @@ export async function handleCompletion(
       tools: body.tools || [],
     };
 
-    // Pass a reasoning effort through to OpenRouter if one is given
+    // Pass a reasoning effort through to OpenRouter if one is given. Anything
+    // other than low, medium or high is dropped, and on the server key the
+    // models listed in MEDIUM_EFFORT_DEFAULT_MODELS run at medium unless asked
+    // otherwise, rather than at whatever their own default is.
     const effort = body.reasoning?.effort;
     if (effort === "low" || effort === "medium" || effort === "high") {
       requestBody.reasoning = { effort };
+    } else if (!userKey && MEDIUM_EFFORT_DEFAULT_MODELS.includes(body.model)) {
+      requestBody.reasoning = { effort: "medium" };
     }
 
     // Add provider preference if specified (e.g., "Cerebras" for fast inference)
