@@ -9,6 +9,8 @@ const ALLOWED_ORIGINS = [
   'https://magland.github.io',
   'https://dandi.github.io',
   'https://medit.dandiarchive.org',
+  // dandi-medit pull request previews on Cloudflare Pages
+  /^https:\/\/([a-z0-9-]+\.)?dandi-medit\.pages\.dev$/,
   "https://dandiset-metadata-assistant.surge.sh",
   'https://airesearchcoach.org'
 ];
