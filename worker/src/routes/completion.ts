@@ -27,6 +27,7 @@ const CHEAP_MODELS = [
   "google/gemini-3-flash-preview",
   "deepseek/deepseek-v4-flash-0731", // $0.09/$0.18 per M tokens
   "openai/gpt-6-luna", // $0.10/$0.50 per M tokens - neurosift-chat default
+  "anthropic/claude-haiku-5.5", // $0.10/$0.50 per M tokens - dandi-medit default
 ];
 
 const PHRASES_TO_CHECK = [
