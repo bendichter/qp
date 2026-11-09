@@ -59,3 +59,7 @@ cd nextjs/qp-api
 npm install
 npm run dev
 ```
+
+## Deployment
+
+The frontend is automatically deployed to Cloudflare Pages when changes are pushed to the `main` branch via GitHub Actions. See [DEPLOYMENT.md](DEPLOYMENT.md) for setup instructions and details.
