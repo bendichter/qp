@@ -12,7 +12,9 @@ const ALLOWED_ORIGINS = [
   // dandi-medit pull request previews on Cloudflare Pages
   /^https:\/\/([a-z0-9-]+\.)?dandi-medit\.pages\.dev$/,
   "https://dandiset-metadata-assistant.surge.sh",
-  'https://airesearchcoach.org'
+  'https://airesearchcoach.org',
+  // Neurosift chat redesign preview on GitHub Pages
+  'https://jguerrero-prog.github.io'
 ];
 
 export function isOriginAllowed(origin: string | null): boolean {
