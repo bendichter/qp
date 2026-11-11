@@ -9,7 +9,8 @@ export type AlertStatus = Status;
 
 /** primary makes the action a Primary button and the other one Secondary, such as Allow beside Deny. */
 type ActionBase = { label: string; primary?: boolean };
-type ButtonAction = ActionBase & { onClick: () => void };
+/** loading shows a spinner and ignores clicks while the action runs, such as Refresh status. */
+type ButtonAction = ActionBase & { onClick: () => void; loading?: boolean };
 type LinkAction = ActionBase & { href: string; newTab?: boolean };
 export type AlertAction = ButtonAction | LinkAction;
 
@@ -23,7 +24,8 @@ interface AlertProps {
 }
 
 const actionProps = (action: AlertAction) => {
-  if ("onClick" in action) return { onClick: action.onClick };
+  if ("onClick" in action)
+    return { onClick: action.onClick, loading: action.loading };
   return action.newTab
     ? { href: action.href, target: "_blank", rel: "noopener noreferrer" }
     : { href: action.href };

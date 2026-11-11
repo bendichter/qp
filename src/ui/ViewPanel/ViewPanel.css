@@ -1,4 +1,5 @@
 .ns-view {
+  box-sizing: border-box;
   display: grid;
   gap: var(--space-4);
   block-size: 100%;
@@ -7,6 +8,8 @@
 
 .ns-view--settings {
   grid-template-columns: minmax(0, 1fr) var(--layout-panel-default);
+  /* The row fills the panel, so a tall settings column scrolls instead of stretching it. */
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .ns-view-main {
@@ -56,5 +59,6 @@
 @media (width <= 1024px) {
   .ns-view--settings {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
   }
 }

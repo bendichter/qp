@@ -1,5 +1,6 @@
 import { useId, useRef, type ReactNode } from "react";
 import { IconButton } from "../IconButton/IconButton";
+import { dismissHandlers } from "./dismissHandlers";
 import { useModalDialog } from "./useModalDialog";
 import "./Dialog.css";
 
@@ -65,11 +66,7 @@ export function Drawer({
       ref={dialog}
       aria-labelledby={titleId}
       className={`ns-drawer ns-drawer--overlay ns-drawer--${side}`}
-      onClose={onClose}
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
+      {...dismissHandlers(onClose)}
       // A click on the backdrop lands on the dialog itself, outside its content.
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();

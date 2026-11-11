@@ -47,6 +47,20 @@
   max-inline-size: 16rem;
 }
 
+.ns-time-status {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  color: var(--text-secondary);
+  font: var(--type-body-sm);
+  letter-spacing: var(--type-body-sm-letter-spacing);
+}
+
+/* Out of the flow while empty, so it adds no gap but stays a live region. */
+.ns-time-status:empty {
+  position: absolute;
+}
+
 .ns-time-speed {
   inline-size: calc(var(--space-16) + var(--space-4));
 }

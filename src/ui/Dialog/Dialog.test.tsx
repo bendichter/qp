@@ -228,6 +228,65 @@ describe("Drawer", () => {
     outside.remove();
   });
 
+  it("closing a dialog opened inside it leaves the drawer open", () => {
+    const drawerClose = vi.fn();
+    const dialogClose = vi.fn();
+    render(
+      <Drawer open onClose={drawerClose} title="Filters" mode="overlay">
+        <Dialog
+          open
+          onClose={dialogClose}
+          title="Save these filters?"
+          confirmLabel="Save"
+          onConfirm={vi.fn()}
+        >
+          Name the set.
+        </Dialog>
+      </Drawer>,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Save these filters?" });
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+    (dialog as HTMLDialogElement).close();
+    expect(dialogClose).toHaveBeenCalledTimes(2);
+    expect(drawerClose).not.toHaveBeenCalled();
+  });
+
+  it("closing it from inside a dialog leaves the dialog open", () => {
+    const dialogClose = vi.fn();
+    const drawerClose = vi.fn();
+    render(
+      <Dialog
+        open
+        onClose={dialogClose}
+        title="Settings"
+        confirmLabel="Save"
+        onConfirm={vi.fn()}
+      >
+        <Drawer open onClose={drawerClose} title="Help" mode="overlay">
+          What each setting does.
+        </Drawer>
+      </Dialog>,
+    );
+    const drawer = screen.getByRole("dialog", { name: "Help" });
+    fireEvent(drawer, new Event("cancel", { cancelable: true }));
+    (drawer as HTMLDialogElement).close();
+    expect(drawerClose).toHaveBeenCalledTimes(2);
+    expect(dialogClose).not.toHaveBeenCalled();
+  });
+
+  it("closes from Escape without letting the browser close it first", () => {
+    const onClose = vi.fn();
+    render(
+      <Drawer open onClose={onClose} title="Filters" mode="overlay">
+        Units with a firing rate above 5 Hz.
+      </Drawer>,
+    );
+    const cancel = new Event("cancel", { cancelable: true });
+    fireEvent(screen.getByRole("dialog", { name: "Filters" }), cancel);
+    expect(cancel.defaultPrevented).toBe(true);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("renders nothing while closed", () => {
     render(
       <Drawer

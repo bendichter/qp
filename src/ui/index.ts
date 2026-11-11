@@ -99,3 +99,5 @@ export {
 } from "./Catalog/Catalog";
 export { PromptList } from "./PromptList/PromptList";
 export type { Prompt } from "./PromptList/PromptList";
+export { ImageZoom } from "./ImageZoom/ImageZoom";
+export type { ImageZoomValue } from "./ImageZoom/zoomMath";

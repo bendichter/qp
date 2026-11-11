@@ -213,4 +213,36 @@ describe("Playback", () => {
     fireEvent.click(screen.getByRole("button", { name: "Pause" }));
     expect(onPlayingChange).toHaveBeenLastCalledWith(false);
   });
+
+  it("reads out a frame in place of the time when given one", () => {
+    render(
+      <Playback
+        playing={false}
+        onPlayingChange={() => {}}
+        speed="1"
+        onSpeedChange={() => {}}
+        time={13.7}
+        readout="Frame 412 of 113,855"
+      />,
+    );
+    expect(screen.getByText("Frame 412 of 113,855")).toBeTruthy();
+    expect(screen.queryByText("13.70 s")).toBeNull();
+  });
+
+  it("says when it is waiting for data, in a status that stays mounted", () => {
+    const props = {
+      playing: true,
+      onPlayingChange: () => {},
+      speed: "1",
+      onSpeedChange: () => {},
+      time: 5.85,
+    };
+    const { rerender } = render(<Playback {...props} />);
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe("");
+    rerender(<Playback {...props} waiting />);
+    expect(screen.getByRole("status").textContent).toContain(
+      "Waiting for data",
+    );
+  });
 });

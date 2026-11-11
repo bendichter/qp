@@ -128,6 +128,22 @@ describe("Alert", () => {
     expect(allow).toHaveBeenCalledTimes(1);
   });
 
+  it("shows a button action as loading, which ignores clicks", () => {
+    const refresh = vi.fn();
+    render(
+      <Alert
+        status="info"
+        actions={[{ label: "Refresh status", onClick: refresh, loading: true }]}
+      >
+        Waiting
+      </Alert>,
+    );
+    const button = screen.getByRole("button", { name: "Refresh status" });
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    fireEvent.click(button);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
   it("opens a link action in a new tab when asked", () => {
     render(
       <Alert

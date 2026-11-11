@@ -117,6 +117,38 @@ describe("Button", () => {
     expect(button.getAttribute("aria-pressed")).toBe("true");
   });
 
+  it("as Link is a native button that reads like a link in running text, at the text's size", () => {
+    const onClick = vi.fn();
+    render(
+      <p>
+        Add an API key in{" "}
+        <Button variant="link" size="sm" onClick={onClick}>
+          Settings
+        </Button>
+        .
+      </p>,
+    );
+    const button = screen.getByRole("button", { name: "Settings" });
+    expect(button.tagName).toBe("BUTTON");
+    expect(button.getAttribute("type")).toBe("button");
+    expect(button.className).toBe("ns-button ns-button--link");
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("as Link can be disabled, and then can't be clicked", () => {
+    const onClick = vi.fn();
+    render(
+      <Button variant="link" disabled onClick={onClick}>
+        Add a comment?
+      </Button>,
+    );
+    const button = screen.getByRole("button", { name: "Add a comment?" });
+    expect(button).toHaveProperty("disabled", true);
+    fireEvent.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
   it("is a link when it goes somewhere", () => {
     render(
       <Button href="https://dandiarchive.org" icon="launch">

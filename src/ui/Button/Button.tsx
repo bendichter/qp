@@ -9,10 +9,16 @@ import { Spinner } from "../Spinner/Spinner";
 import "../control.css";
 import "./Button.css";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "ghost"
+  | "destructive"
+  | "link";
 export type ButtonSize = "lg" | "md" | "sm";
 
 interface CommonProps {
+  /** link is an action inside running text, at the text's size, so size doesn't apply. */
   variant?: ButtonVariant;
   size?: ButtonSize;
   icon?: IconName;
@@ -37,7 +43,9 @@ type LinkProps = CommonProps &
 export type ButtonProps = ActionProps | LinkProps;
 
 const classes = (variant: ButtonVariant, size: ButtonSize) =>
-  `ns-button ns-button--${variant} ns-button--${size}`;
+  variant === "link"
+    ? "ns-button ns-button--link"
+    : `ns-button ns-button--${variant} ns-button--${size}`;
 
 export function Button(props: ButtonProps) {
   if (props.href !== undefined) {

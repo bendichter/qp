@@ -1,5 +1,6 @@
 import { IconButton } from "../IconButton/IconButton";
 import { Select } from "../Select/Select";
+import { Spinner } from "../Spinner/Spinner";
 import { formatSeconds } from "./timeMath";
 import "../base.css";
 import "./TimeControls.css";
@@ -16,6 +17,10 @@ interface PlaybackProps {
   onSpeedChange: (speed: string) => void;
   /** The shared cursor, in seconds. */
   time: number;
+  /** Replaces the time, such as “Frame 412 of 113,855”. */
+  readout?: string;
+  /** Playing, but held until the next stretch of data loads. */
+  waiting?: boolean;
 }
 
 /** Plays the session at a chosen speed, moving the shared cursor. It never starts by itself. */
@@ -25,6 +30,8 @@ export function Playback({
   speed,
   onSpeedChange,
   time,
+  readout,
+  waiting = false,
 }: PlaybackProps) {
   return (
     <div className="ns-time-group" role="group" aria-label="Playback">
@@ -46,7 +53,17 @@ export function Playback({
         />
       </span>
       <span className="ns-time-divider" />
-      <span className="ns-time-value">{formatSeconds(time)} s</span>
+      <span className="ns-time-value">
+        {readout ?? `${formatSeconds(time)} s`}
+      </span>
+      <span className="ns-time-status" role="status">
+        {waiting && (
+          <>
+            <Spinner />
+            Waiting for data
+          </>
+        )}
+      </span>
     </div>
   );
 }
