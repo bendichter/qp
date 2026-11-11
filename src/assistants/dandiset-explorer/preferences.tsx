@@ -19,6 +19,7 @@ const AssistantDisplayInfo = () => (
 );
 
 const preferences: Preferences = {
+  assistantName: "Dandiset Explorer",
   getAssistantSystemPrompt: getDandisetExplorerSystemPrompt,
   assistantDisplayInfo: <AssistantDisplayInfo />,
   suggestedPrompts,

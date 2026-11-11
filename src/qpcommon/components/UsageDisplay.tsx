@@ -1,5 +1,6 @@
 import { FunctionComponent, useState } from "react";
 import ModelSelectionDialog from "./ModelSelectionDialog";
+import "./UsageDisplay.css";
 
 interface UsageDisplayProps {
   model: string;
@@ -28,17 +29,18 @@ const UsageDisplay: FunctionComponent<UsageDisplayProps> = ({
 
   return (
     <>
-      <div className="usage-display">
-        <span
-          className="model-name-clickable"
+      <p className="usage-display">
+        <button
+          type="button"
+          className="usage-display-model"
           onClick={() => setIsDialogOpen(true)}
         >
           {model}
-        </span>{" "}
+        </button>{" "}
         • {formatTokens(totalUsage.promptTokens)} in •{" "}
         {formatTokens(totalUsage.completionTokens)} out •{" "}
         {formatCost(totalUsage.estimatedCost)}
-      </div>
+      </p>
       <ModelSelectionDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}

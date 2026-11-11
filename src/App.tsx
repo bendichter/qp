@@ -1,3 +1,4 @@
+import { ToastProvider } from "@ui";
 import { BrowserRouter } from "react-router-dom";
 import MainWindow from "./qpcommon/MainWindow";
 import getTools from "./tools/getTools";
@@ -33,6 +34,7 @@ function App() {
       return repronimAssistantPreferences;
     } else {
       return {
+        assistantName: "Unknown assistant",
         getAssistantSystemPrompt: async () => "Unknown assistant",
         assistantDisplayInfo: "Unknown assistant",
         suggestedPrompts: [],
@@ -41,9 +43,11 @@ function App() {
     }
   }, []);
   return (
-    <BrowserRouter>
-      <MainWindow getTools={getTools} preferences={preferences} />
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <MainWindow getTools={getTools} preferences={preferences} />
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 

@@ -11,6 +11,7 @@ const AssistantDisplayInfo = () => (
 );
 
 const preferences: Preferences = {
+  assistantName: "NWB Assistant",
   getAssistantSystemPrompt: async () => nwbAssistantSystemPrompt,
   assistantDisplayInfo: <AssistantDisplayInfo />,
   suggestedPrompts: [

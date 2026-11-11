@@ -18,6 +18,7 @@ const AssistantDisplayInfo = () => {
 };
 
 const preferences: Preferences = {
+  assistantName: "Figpack Assistant",
   getAssistantSystemPrompt: async () => figpackAssistantSystemPrompt,
   assistantDisplayInfo: <AssistantDisplayInfo />,
   suggestedPrompts: [],

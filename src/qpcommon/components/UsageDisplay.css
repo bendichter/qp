@@ -1,0 +1,21 @@
+.usage-display {
+  margin: 0;
+  font: var(--type-caption);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-muted);
+}
+
+.usage-display-model {
+  padding: 0;
+  font: inherit;
+  color: var(--text-link);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.usage-display-model:hover {
+  color: var(--text-link-hover);
+}

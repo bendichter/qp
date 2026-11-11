@@ -54,6 +54,7 @@ const AssistantDisplayInfo = () => {
 };
 
 const preferences: Preferences = {
+  assistantName: "ReproNim Assistant",
   getAssistantSystemPrompt: async () => repronimAssistantSystemPrompt,
   assistantDisplayInfo: <AssistantDisplayInfo />,
   suggestedPrompts: [

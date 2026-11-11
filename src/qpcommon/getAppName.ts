@@ -11,6 +11,9 @@ const getAppName = (): string => {
   if (appParam) {
     return appParam;
   }
+  if (import.meta.env.VITE_APP_NAME) {
+    return import.meta.env.VITE_APP_NAME;
+  }
   if (window.location.hostname === "chat.neurosift.app") {
     return "neurosift-chat";
   }

@@ -1,0 +1,170 @@
+/* Questions, answers, tool calls and feedback in the chat transcript. */
+.chat-question {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.chat-question-bubble {
+  max-inline-size: 85%;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-default);
+  font: var(--type-body);
+  letter-spacing: var(--type-body-letter-spacing);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--surface-row-hover);
+  border-radius: var(--radius-md);
+}
+
+.chat-question-image {
+  display: block;
+  max-inline-size: 100%;
+  border-radius: var(--radius-sm);
+}
+
+/* Delete sits left of the bubble and shows on hover or keyboard focus. */
+.chat-question-actions {
+  order: -1;
+  opacity: 0;
+}
+
+.chat-question:is(:hover, :focus-within) .chat-question-actions {
+  opacity: 1;
+}
+
+.chat-answer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.chat-markdown {
+  min-inline-size: 0;
+  color: var(--text-default);
+  font: var(--type-body);
+  letter-spacing: var(--type-body-letter-spacing);
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.chat-markdown
+  :where(p, ul, ol, pre, blockquote, figure, h1, h2, h3, h4, h5, h6) {
+  margin: 0;
+}
+
+.chat-markdown > :not(:first-child),
+.chat-markdown :is(li, blockquote) > :not(:first-child) {
+  margin-block-start: var(--space-3);
+}
+
+.chat-markdown :is(ul, ol) {
+  padding-inline-start: var(--space-6);
+}
+
+.chat-markdown :is(h1, h2) {
+  font: var(--type-h4);
+  letter-spacing: var(--type-h4-letter-spacing);
+}
+
+.chat-markdown :is(h3, h4, h5, h6) {
+  font: var(--type-label);
+  letter-spacing: var(--type-label-letter-spacing);
+}
+
+.chat-markdown a {
+  color: var(--text-link);
+}
+
+.chat-markdown a:hover {
+  color: var(--text-link-hover);
+}
+
+.chat-markdown blockquote {
+  padding-inline-start: var(--space-4);
+  color: var(--text-secondary);
+}
+
+.chat-markdown img {
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+.chat-figure img {
+  display: block;
+}
+
+.chat-figure figcaption {
+  margin-block-start: var(--space-1);
+  color: var(--text-secondary);
+  font: var(--type-caption);
+  letter-spacing: var(--type-caption-letter-spacing);
+}
+
+/* Wide equations scroll inside the column instead of the page. */
+.chat-markdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.chat-working,
+.chat-tool-running {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-block-size: var(--layout-target-min);
+  margin: 0;
+  color: var(--text-secondary);
+  font: var(--type-body-sm);
+  letter-spacing: var(--type-body-sm-letter-spacing);
+}
+
+.chat-tool-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+.chat-feedback {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+
+.chat-feedback-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.chat-feedback-note {
+  margin: 0;
+  color: var(--text-muted);
+  font: var(--type-caption);
+  letter-spacing: var(--type-caption-letter-spacing);
+}
+
+.chat-feedback-form {
+  display: grid;
+  justify-self: stretch;
+  gap: var(--space-2);
+}
+
+/* A button that reads as a link, for "Settings" and "Add a comment?" inside a sentence. */
+.chat-link-button[type="button"] {
+  padding: 0;
+  color: var(--text-link);
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.chat-link-button[type="button"]:hover {
+  color: var(--text-link-hover);
+}

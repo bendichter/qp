@@ -1,55 +1,32 @@
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { FunctionComponent, useCallback, useState } from "react";
 import {
-  Box,
   Button,
-  IconButton,
-  Paper,
-  Stack,
-  Typography,
-  Radio,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  CodeBlock,
   Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-} from "@mui/material";
-import { FunctionComponent, useState, useCallback } from "react";
-import ScrollY from "./ScrollY";
+  Disclosure,
+  InlineCode,
+  InlineMessage,
+  Select,
+  TextInput,
+  type SelectOption,
+} from "@ui";
 import { useJupyterConnectivity } from "./JupyterConnectivity";
 import { testPythonSession, TestResult } from "./pythonSessionTester";
-import { JupyterServer } from "./types";
-import MarkdownContent from "../components/MarkdownContent";
+import { JupyterServer, JupyterServerConfig } from "./types";
+import "./JupyterConfigurationView.css";
 
-type JupyterViewProps = {
-  width?: number;
-  height?: number;
+type JupyterConfigurationViewProps = {
+  assistantName: string;
 };
 
-const ServerStatusIndicator = ({ isAvailable }: { isAvailable: boolean }) => (
-  <Box
-    component="span"
-    sx={{
-      display: "inline-block",
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      backgroundColor: isAvailable ? "success.main" : "error.main",
-      marginRight: 1,
-    }}
-  />
-);
+type ServerDialog = "add" | "token" | "remove" | null;
 
-const JupyterConfigurationView: FunctionComponent<JupyterViewProps> = ({
-  width,
-  height,
-}) => {
+const serverLabel = (server: JupyterServer) =>
+  server.name ? `${server.url} (${server.name})` : server.url;
+
+const JupyterConfigurationView: FunctionComponent<
+  JupyterConfigurationViewProps
+> = ({ assistantName }) => {
   const connectivity = useJupyterConnectivity();
   const {
     jupyterServerUrl,
@@ -62,15 +39,39 @@ const JupyterConfigurationView: FunctionComponent<JupyterViewProps> = ({
 
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | undefined>();
+  const [dialog, setDialog] = useState<ServerDialog>(null);
+  const [tokenInput, setTokenInput] = useState("");
+  const [showToken, setShowToken] = useState(false);
+  const [newServerUrl, setNewServerUrl] = useState("");
+  const [newServerName, setNewServerName] = useState("");
+  const [instructionsOpen, setInstructionsOpen] = useState(false);
+
+  const servers = serverConfig?.servers ?? [];
+  const selectedUrl = serverConfig?.selectedServerUrl ?? jupyterServerUrl;
+  const currentServer = servers.find((s) => s.url === selectedUrl);
+  const serverOptions: SelectOption[] = servers.map((s) => ({
+    value: s.url,
+    label: serverLabel(s),
+  }));
+  if (!currentServer)
+    serverOptions.unshift({
+      value: selectedUrl,
+      label: "Choose a server",
+      disabled: true,
+    });
+
+  const updateConfig = useCallback(
+    (change: (config: JupyterServerConfig) => JupyterServerConfig) =>
+      setServerConfig((prev) => (prev ? change(prev) : prev)),
+    [setServerConfig],
+  );
 
   const handleTest = useCallback(async () => {
     if (!serverConfig) return;
-
     setIsTesting(true);
     setTestResult(undefined);
     try {
-      const result = await testPythonSession(connectivity);
-      setTestResult(result);
+      setTestResult(await testPythonSession(connectivity));
     } catch (error) {
       setTestResult({
         success: false,
@@ -81,391 +82,229 @@ const JupyterConfigurationView: FunctionComponent<JupyterViewProps> = ({
     }
   }, [connectivity, serverConfig]);
 
-  const [isAddServerDialogOpen, setIsAddServerDialogOpen] = useState(false);
-  const [isDeleteConfirmDialogOpen, setIsDeleteConfirmDialogOpen] =
-    useState(false);
-  const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
-  const [serverToDelete, setServerToDelete] = useState<string | null>(null);
-  const [serverForToken, setServerForToken] = useState<string | null>(null);
-  const [tokenInput, setTokenInput] = useState("");
-  const [newServerUrl, setNewServerUrl] = useState("");
-  const [newServerName, setNewServerName] = useState("");
+  const handleServerSelect = (url: string) =>
+    updateConfig((config) => ({ ...config, selectedServerUrl: url }));
 
-  const handleServerSelect = useCallback(
-    (url: string) => {
-      setServerConfig((prev) => {
-        if (prev) {
-          return {
-            ...prev,
-            selectedServerUrl: url,
-          };
-        }
-        return prev;
-      });
-    },
-    [setServerConfig],
-  );
+  const handleAddServer = () => {
+    if (!newServerUrl) return;
+    const newServer: JupyterServer = {
+      url: newServerUrl,
+      name: newServerName,
+      token: "",
+      isBuiltIn: false,
+    };
+    updateConfig((config) => ({
+      ...config,
+      servers: [...config.servers, newServer],
+    }));
+    setNewServerUrl("");
+    setNewServerName("");
+    setDialog(null);
+  };
 
-  const handleAddServer = useCallback(() => {
-    if (newServerUrl) {
-      const newServer: JupyterServer = {
-        url: newServerUrl,
-        name: newServerName,
-        token: "",
-        isBuiltIn: false,
-      };
-      setServerConfig((prev) => {
-        if (prev) {
-          return {
-            ...prev,
-            servers: [...prev.servers, newServer],
-          };
-        }
-        return prev;
-      });
-      setNewServerUrl("");
-      setNewServerName("");
-      setIsAddServerDialogOpen(false);
-    }
-  }, [newServerUrl, newServerName, setServerConfig]);
+  const handleRemoveConfirm = () => {
+    updateConfig((config) => {
+      const remaining = config.servers.filter((s) => s.url !== selectedUrl);
+      return { servers: remaining, selectedServerUrl: remaining[0]?.url ?? "" };
+    });
+    setDialog(null);
+  };
 
-  const handleDeleteConfirm = useCallback(() => {
-    if (serverToDelete) {
-      setServerConfig((prev) => {
-        if (prev) {
-          return {
-            ...prev,
-            servers: prev.servers.filter((s) => s.url !== serverToDelete),
-          };
-        }
-        return prev;
-      });
-    }
-    setIsDeleteConfirmDialogOpen(false);
-    setServerToDelete(null);
-  }, [serverToDelete, setServerConfig]);
-
-  const handleRemoveServer = useCallback((url: string) => {
-    setServerToDelete(url);
-    setIsDeleteConfirmDialogOpen(true);
-  }, []);
-
-  const handleSetToken = useCallback((url: string) => {
-    setServerForToken(url);
+  const openTokenDialog = () => {
     setTokenInput("");
-    setIsTokenDialogOpen(true);
-  }, []);
+    setShowToken(false);
+    setDialog("token");
+  };
 
-  const handleTokenSubmit = useCallback(() => {
-    if (serverForToken) {
-      setServerConfig((prev) => {
-        if (prev) {
-          return {
-            ...prev,
-            servers: prev.servers.map((s) =>
-              s.url === serverForToken ? { ...s, token: tokenInput } : s,
-            ),
-          };
-        }
-        return prev;
-      });
-    }
-    setIsTokenDialogOpen(false);
-    setServerForToken(null);
+  const handleTokenSubmit = () => {
+    updateConfig((config) => ({
+      ...config,
+      servers: config.servers.map((s) =>
+        s.url === selectedUrl ? { ...s, token: tokenInput } : s,
+      ),
+    }));
     setTokenInput("");
-  }, [serverForToken, tokenInput, setServerConfig]);
+    setDialog(null);
+  };
 
-  const originToAllow = window.location.origin;
-
-  const currentServer = serverConfig?.servers.find(
-    (s) => s.url === serverConfig.selectedServerUrl,
-  );
-  const servers = serverConfig?.servers || [];
+  const closeDialog = () => setDialog(null);
+  const origin = window.location.origin;
+  const kernels = `${numActiveKernels} active ${numActiveKernels === 1 ? "kernel" : "kernels"}`;
 
   return (
-    <ScrollY width={width || 600} height={height || 600}>
-      <Box sx={{ p: 2 }}>
-        {/* Status Section */}
-        <Paper elevation={2} sx={{ mb: 3, p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <ServerStatusIndicator isAvailable={jupyterServerIsAvailable} />
-            <Typography variant="h6" sx={{ flexGrow: 1 }}>
-              Jupyter Connection
-              {currentServer?.name && ` - ${currentServer.name}`}
-            </Typography>
-          </Box>
+    <section className="jupyter-config" aria-labelledby="jupyter-config-title">
+      <h3 id="jupyter-config-title" className="jupyter-config-title">
+        Python (Jupyter)
+      </h3>
+      <p className="jupyter-config-caption">
+        {assistantName} runs Python code on a Jupyter server you choose. Nothing
+        runs until one is connected.
+      </p>
 
-          <Box>
-            <Typography variant="subtitle2" gutterBottom>
-              Current Server Status
-            </Typography>
-            <Typography
-              color="text.secondary"
-              sx={{
-                wordBreak: "break-all",
-                mb: 1,
-              }}
-            >
-              {jupyterServerUrl}
-            </Typography>
-            <Stack direction="row" spacing={2} alignItems="center">
-              {jupyterServerIsAvailable ? (
-                <>
-                  <Typography variant="body2" color="success.main">
-                    Connected - {numActiveKernels} active{" "}
-                    {numActiveKernels === 1 ? "kernel" : "kernels"}
-                  </Typography>
-                  <Button
-                    size="small"
-                    onClick={handleTest}
-                    disabled={isTesting}
-                  >
-                    {isTesting ? "Testing..." : "Test Connection"}
-                  </Button>
-                  {testResult && (
-                    <Typography
-                      variant="body2"
-                      color={testResult.success ? "success.main" : "error.main"}
-                    >
-                      {testResult.message}
-                    </Typography>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Typography variant="body2" color="error.main">
-                    Not connected - see instructions below to host a server
-                  </Typography>
-                  <Button size="small" onClick={refreshJupyter}>
-                    Retry Connection
-                  </Button>
-                </>
-              )}
-            </Stack>
-          </Box>
-        </Paper>
+      {jupyterServerIsAvailable ? (
+        <InlineMessage status="info">
+          Connected to {jupyterServerUrl} · {kernels}
+        </InlineMessage>
+      ) : (
+        <div className="jupyter-config-row">
+          <InlineMessage status="warning">
+            Not connected. Start a Jupyter server, then Try again.
+          </InlineMessage>
+          <Button variant="ghost" size="sm" onClick={refreshJupyter}>
+            Try again
+          </Button>
+        </div>
+      )}
 
-        {/* Server Selection Table */}
-        <Paper elevation={2} sx={{ mb: 3, p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Server Selection
-          </Typography>
-          <TableContainer
-            sx={{ "& table": { tableLayout: "auto", width: "auto" } }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox" sx={{ width: "48px" }} />
-                  <TableCell sx={{ whiteSpace: "nowrap" }}>
-                    URL (name)
-                  </TableCell>
-                  <TableCell sx={{ whiteSpace: "nowrap", width: "150px" }}>
-                    Token
-                  </TableCell>
-                  <TableCell padding="checkbox" sx={{ width: "48px" }} />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {servers.map((server) => (
-                  <TableRow key={server.url}>
-                    <TableCell padding="checkbox">
-                      <Radio
-                        checked={jupyterServerUrl === server.url}
-                        onChange={() => handleServerSelect(server.url)}
-                      />
-                    </TableCell>
-                    <TableCell
-                      onClick={() => handleServerSelect(server.url)}
-                      sx={{
-                        cursor: "pointer",
-                        "&:hover": {
-                          backgroundColor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}
-                    >
-                      {server.url} {server.name ? `(${server.name})` : ""}
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography variant="body2">
-                          {server.token ? "******" : ""}
-                        </Typography>
-                        <Button
-                          size="small"
-                          onClick={() => handleSetToken(server.url)}
-                        >
-                          {server.token ? "Change token" : "Set token"}
-                        </Button>
-                      </Stack>
-                    </TableCell>
-                    <TableCell padding="checkbox">
-                      {!server.isBuiltIn && (
-                        <IconButton
-                          size="small"
-                          onClick={() => handleRemoveServer(server.url)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Box sx={{ mt: 2 }}>
-            <Button
-              startIcon={<AddIcon />}
-              onClick={() => setIsAddServerDialogOpen(true)}
-            >
-              Add Server
-            </Button>
-          </Box>
-        </Paper>
+      <Select
+        label="Server"
+        value={selectedUrl}
+        onChange={handleServerSelect}
+        options={serverOptions}
+        helper={
+          !currentServer
+            ? "No server chosen yet."
+            : currentServer.token
+              ? "Token set. Change it with Set token."
+              : "No token."
+        }
+      />
 
-        {/* Delete Server Confirmation Dialog */}
-        <Dialog
-          open={isDeleteConfirmDialogOpen}
-          onClose={() => {
-            setIsDeleteConfirmDialogOpen(false);
-            setServerToDelete(null);
-          }}
+      <div className="jupyter-config-row">
+        {jupyterServerIsAvailable && (
+          <Button size="sm" onClick={handleTest} loading={isTesting}>
+            Test connection
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={openTokenDialog}
+          disabled={!currentServer}
         >
-          <DialogTitle>Confirm Server Deletion</DialogTitle>
-          <DialogContent>
-            <Typography>
-              Are you sure you want to delete this server?
-              {serverToDelete && (
-                <Box component="div" sx={{ mt: 1, wordBreak: "break-all" }}>
-                  {serverToDelete}
-                </Box>
-              )}
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => {
-                setIsDeleteConfirmDialogOpen(false);
-                setServerToDelete(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleDeleteConfirm} color="error">
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
+          Set token
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => setDialog("add")}>
+          Add server
+        </Button>
+        {currentServer && !currentServer.isBuiltIn && (
+          <Button variant="ghost" size="sm" onClick={() => setDialog("remove")}>
+            Remove server
+          </Button>
+        )}
+      </div>
+      {testResult && (
+        <InlineMessage status={testResult.success ? "info" : "error"}>
+          {testResult.message}
+        </InlineMessage>
+      )}
 
-        {/* Add Server Dialog */}
-        <Dialog
-          open={isAddServerDialogOpen}
-          onClose={() => setIsAddServerDialogOpen(false)}
+      <div>
+        <Disclosure
+          label="How to run a Jupyter server"
+          open={instructionsOpen}
+          onToggle={setInstructionsOpen}
         >
-          <DialogTitle>Add New Server</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <TextField
-                label="Server URL"
-                value={newServerUrl}
-                onChange={(e) => setNewServerUrl(e.target.value)}
-                fullWidth
-                placeholder="http://localhost:8890"
-              />
-              <TextField
-                label="Server Name (optional)"
-                value={newServerName}
-                onChange={(e) => setNewServerName(e.target.value)}
-                fullWidth
-                placeholder="My Custom Server"
-              />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setIsAddServerDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddServer} disabled={!newServerUrl}>
-              Add
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Token Dialog */}
-        <Dialog
-          open={isTokenDialogOpen}
-          onClose={() => {
-            setIsTokenDialogOpen(false);
-            setServerForToken(null);
-            setTokenInput("");
-          }}
-        >
-          <DialogTitle>Set Server Token</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Token"
-              type="text"
-              fullWidth
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
+          <div className="jupyter-config-instructions">
+            <p>To run a local Jupyter server, install JupyterLab with pip:</p>
+            <CodeBlock language="shell" code="pip install jupyterlab" />
+            <p>Then start JupyterLab:</p>
+            <CodeBlock language="shell" code={jupyterLabCommand(origin)} />
+            <p>
+              This allows connections from this page, turns off the token for
+              easier access and shuts down idle kernels. Then choose its URL
+              and, if needed, set a token above.
+            </p>
+            <p>
+              To connect to JupyterHub (such as DANDI Hub), use the{" "}
+              <InlineCode>jupyter-web-proxy</InlineCode> package:
+            </p>
+            <CodeBlock
+              language="shell"
+              code={`npx jupyter-web-proxy https://hub.dandiarchive.org/user/<user> -t <token> -o ${origin}`}
             />
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => {
-                setIsTokenDialogOpen(false);
-                setServerForToken(null);
-                setTokenInput("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleTokenSubmit}>Save</Button>
-          </DialogActions>
-        </Dialog>
+            <p>
+              Replace <InlineCode>&lt;user&gt;</InlineCode> with your username
+              and <InlineCode>&lt;token&gt;</InlineCode> with your JupyterHub
+              token. Then choose http://localhost:8010 above. See the{" "}
+              <a
+                href="https://www.npmjs.com/package/jupyter-web-proxy"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                jupyter-web-proxy documentation
+              </a>
+              .
+            </p>
+          </div>
+        </Disclosure>
+      </div>
 
-        {/* Host Instructions */}
-        <MarkdownContent
-          content={hostInstructions
-            .split("{ originToAllow }")
-            .join(originToAllow)}
+      <Dialog
+        open={dialog === "add"}
+        onClose={closeDialog}
+        title="Add server"
+        confirmLabel="Add"
+        onConfirm={handleAddServer}
+        confirmDisabled={!newServerUrl}
+        size="sm"
+      >
+        <div className="jupyter-config-fields">
+          <TextInput
+            type="url"
+            label="Server URL"
+            value={newServerUrl}
+            onChange={setNewServerUrl}
+            placeholder="http://localhost:8890"
+          />
+          <TextInput
+            label="Name (optional)"
+            value={newServerName}
+            onChange={setNewServerName}
+            placeholder="My server"
+          />
+        </div>
+      </Dialog>
+      <Dialog
+        open={dialog === "token"}
+        onClose={closeDialog}
+        title="Set token"
+        confirmLabel="Save"
+        onConfirm={handleTokenSubmit}
+        size="sm"
+      >
+        <TextInput
+          type="password"
+          label="Token"
+          value={tokenInput}
+          onChange={setTokenInput}
+          helper={`For ${selectedUrl}`}
+          autoComplete="off"
+          reveal={{
+            shown: showToken,
+            onShownChange: setShowToken,
+            name: "token",
+          }}
         />
-      </Box>
-    </ScrollY>
+      </Dialog>
+      <Dialog
+        open={dialog === "remove"}
+        onClose={closeDialog}
+        title="Remove server?"
+        confirmLabel="Remove"
+        onConfirm={handleRemoveConfirm}
+        size="sm"
+        kind="destructive"
+      >
+        <p className="jupyter-config-break">
+          {selectedUrl} will be removed from your servers.
+        </p>
+      </Dialog>
+    </section>
   );
 };
 
-const hostInstructions = `
-## Instructions
-
-**To run a local Jupyter server**, you need to install JupyterLab. You can do this using pip:
-
-\`\`\`bash
-pip install jupyterlab
-\`\`\`
-
-Then, start JupyterLab with the following command:
-
-\`\`\`bash
-jupyter lab --NotebookApp.allow_origin='{ originToAllow }' --NotebookApp.token='' --NotebookApp.disable_check_xsrf="True" --no-browser --port=8888 --MappingKernelManager.cull_interval="300" --MappingKernelManager.cull_idle_timeout="300" --MappingKernelManager.cull_connected="True"
-\`\`\`
-
-This command allows connections from your local frontend application, disables the token for easier access, and sets up kernel culling to manage resources effectively.
-
-Finally, update the URL and optional token in the form above to connect to your local Jupyter server.
-
-**To connect to JupyterHub (e.g., DANDI Hub)**, you can use the \`jupyter-web-proxy\` package. Run:
-
-\`\`\`bash
-npx jupyter-web-proxy https://hub.dandiarchive.org/user/<user> -t <token> -o { originToAllow }
-\`\`\`
-
-Replace \`<user>\` with your username and \`<token>\` with your JupyterHub token. Then select http://localhost:8010 above.
-
-For more information, see the [jupyter-web-proxy documentation](https://www.npmjs.com/package/jupyter-web-proxy).
-`;
+const jupyterLabCommand = (origin: string) =>
+  `jupyter lab --NotebookApp.allow_origin='${origin}' --NotebookApp.token='' --NotebookApp.disable_check_xsrf="True" --no-browser --port=8888 --MappingKernelManager.cull_interval="300" --MappingKernelManager.cull_idle_timeout="300" --MappingKernelManager.cull_connected="True"`;
 
 export default JupyterConfigurationView;

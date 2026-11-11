@@ -1,0 +1,56 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [development]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      # The upstream code predates prettier, so only files this pull request changes are checked.
+      - name: Check formatting of changed files
+        run: |
+          git diff --name-only --diff-filter=ACMR -z "origin/${{ github.base_ref }}...HEAD" \
+            | xargs -0 --no-run-if-empty npx prettier --check --ignore-unknown
+
+      # Upstream files have lint errors this fork doesn't own, so only changed files are linted.
+      - name: Lint changed files
+        run: |
+          git diff --name-only --diff-filter=ACMR -z "origin/${{ github.base_ref }}...HEAD" -- '*.ts' '*.tsx' '*.js' \
+            | xargs -0 --no-run-if-empty npx eslint --no-warn-ignored
+
+      - name: Type check
+        run: npx tsc -b
+
+      # These two check upstream docs (README and CLAUDE.md entries) that this fork doesn't own.
+      - name: Unit tests
+        run: >-
+          npm run test:run --
+          --exclude src/assistants/bids-assistant/integration.test.ts
+          --exclude src/assistants/repronim-assistant/integration.test.ts
+
+      - name: Build
+        run: npm run build
+
+      - name: Count MUI files, inline styles and sx props
+        run: |
+          set -o pipefail
+          git worktree add --detach "$RUNNER_TEMP/base" "origin/${{ github.base_ref }}"
+          node scripts/count.mjs "$PWD/src" "$RUNNER_TEMP/base/src" | tee -a "$GITHUB_STEP_SUMMARY"

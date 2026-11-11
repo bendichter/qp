@@ -49,6 +49,7 @@ const AssistantDisplayInfo = () => {
 };
 
 const preferences: Preferences = {
+  assistantName: "BIDS Assistant",
   getAssistantSystemPrompt: async () => bidsAssistantSystemPrompt,
   assistantDisplayInfo: <AssistantDisplayInfo />,
   suggestedPrompts: [

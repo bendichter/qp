@@ -1,71 +1,85 @@
-import { FunctionComponent, useRef, useEffect, useCallback } from "react";
+import { Button, TextArea } from "@ui";
+import {
+  FunctionComponent,
+  useCallback,
+  useId,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
+import "./ChatInput.css";
 
 interface ChatInputProps {
+  label: string;
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  /** Locks the field, for a stopped chat, an error or a missing API key. */
   disabled?: boolean;
-  placeholder?: string;
+  /** The assistant is answering: the field stays typable and Send is off. */
+  working?: boolean;
 }
 
 const ChatInput: FunctionComponent<ChatInputProps> = ({
+  label,
   value,
   onChange,
   onSubmit,
   disabled = false,
-  placeholder = "Type your message here... (Enter to send, Shift+Enter for new line)",
+  working = false,
 }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const helperId = useId();
+  const canSend = value.trim() !== "" && !disabled && !working;
 
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-    }
-  }, [value]);
+  const send = useCallback(() => {
+    if (canSend) onSubmit();
+  }, [canSend, onSubmit]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        if (e.shiftKey) {
-          // Shift+Enter: allow default behavior (new line)
-          return;
-        } else {
-          // Enter: submit
-          e.preventDefault();
-          onSubmit();
-        }
-      }
+  const sendOnEnter = useCallback(
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (
+        event.key !== "Enter" ||
+        event.shiftKey ||
+        event.nativeEvent.isComposing
+      )
+        return;
+      event.preventDefault();
+      send();
     },
-    [onSubmit],
+    [send],
   );
 
-  const handleSubmit = useCallback(() => {
-    if (value.trim() === "" || disabled) return;
-    onSubmit();
-  }, [value, onSubmit, disabled]);
+  const submit = useCallback(
+    (event: FormEvent) => {
+      event.preventDefault();
+      send();
+    },
+    [send],
+  );
 
   return (
-    <div className="input-area">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        className="chat-input"
-        disabled={disabled}
-      />
-      <button
-        onClick={handleSubmit}
-        disabled={value.trim() === "" || disabled}
-        className="send-button"
-        title="Send message"
-      >
-        ➤
-      </button>
-    </div>
+    <form className="chat-input" onSubmit={submit}>
+      <div className="chat-input-row">
+        <TextArea
+          label={label}
+          hideLabel
+          placeholder={label}
+          size="lg"
+          aria-describedby={helperId}
+          value={value}
+          onChange={onChange}
+          onKeyDown={sendOnEnter}
+          rows={1}
+          maxRows={8}
+          disabled={disabled}
+        />
+        <Button type="submit" variant="primary" size="lg" disabled={!canSend}>
+          Send
+        </Button>
+      </div>
+      <p id={helperId} className="chat-input-helper">
+        Enter to send, Shift+Enter for a new line
+      </p>
+    </form>
   );
 };
 
