@@ -1,6 +1,8 @@
 const queryParams = new URLSearchParams(window.location.search);
 export const dandisetId = queryParams.get("dandisetId") || "000563";
 export const dandisetVersion = queryParams.get("dandisetVersion") || "draft";
+// The NWB file the chat was opened from, such as sub-1/sub-1_ses-1_ecephys+image.nwb.
+export const assetPath = queryParams.get("assetPath") || undefined;
 
 let dandisetMetadataCache: string | null = null;
 
@@ -39,7 +41,13 @@ const getSystemPrompt = async () => {
   message1 += `You are a helpful technical assistant and an expert in DANDI, NWB (Neurodata Without Borders), and Python programming.
 
 You are going to help answer questions relevant about Dandiset ${dandisetId} version ${dandisetVersion}
-
+${
+  assetPath
+    ? `
+The user opened this chat from the NWB file "${assetPath}" in this Dandiset, so "this file" means that file. You already know its asset path, so you can call the get_nwbfile_info tool with it right away, without listing the Dandiset's assets first.
+`
+    : ""
+}
 If the user asks questions that are not related to DANDI, a Dandiset, or NWB, politely refuse to answer and include the following annotation at the end of your response:
 <irrelevant>
 

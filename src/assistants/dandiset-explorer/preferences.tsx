@@ -1,9 +1,13 @@
 import { Preferences } from "../../qpcommon/MainWindow";
 import getDandisetExplorerSystemPrompt, {
+  assetPath,
   dandisetId,
 } from "./dandisetExplorerSystemPrompt";
 
-const suggestedPrompts: string[] = ["Tell me about this Dandiset."];
+const suggestedPrompts: string[] = [
+  ...(assetPath ? ["Tell me about this file."] : []),
+  "Tell me about this Dandiset.",
+];
 
 const AssistantDisplayInfo = () => (
   <div style={{ maxWidth: "600px", margin: "0 auto" }}>
