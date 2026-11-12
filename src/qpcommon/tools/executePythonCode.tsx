@@ -8,6 +8,7 @@ import {
 } from "../types";
 import { ORContentPart, ORToolCall } from "../completion/openRouterTypes";
 import MarkdownContent from "../components/MarkdownContent";
+import ToolCall from "../components/ToolCall";
 
 export const toolFunction: QPFunctionDescription = {
   name: "execute_python_code",
@@ -191,31 +192,17 @@ export const createToolCallView = (
   toolOutput: (ChatMessage & { role: "tool" }) | undefined,
 ): React.JSX.Element => {
   const args = JSON.parse(toolCall.function.arguments || "{}");
-  const code: string = args.code || "";
   const reasoning: string = args.reasoning || "";
-  const mdContent = `**Executing Python code**
-
-${reasoning}
-
-\`\`\`python
-${code}
-\`\`\`
-`;
-  const md = <MarkdownContent content={mdContent} />;
-  if (!toolOutput) {
-    return <>{md}</>;
-  } else {
-    return (
-      <>
-        {md}
-        {toolOutput.content && (
-          <div style={{ whiteSpace: "pre-wrap", marginTop: "10px" }}>
-            {toolOutput.content}
-          </div>
-        )}
-      </>
-    );
-  }
+  return (
+    <ToolCall
+      kind="script"
+      toolName={toolCall.function.name}
+      input={args.code || ""}
+      inputLanguage="python"
+      output={toolOutput ? toolOutput.content : undefined}
+      note={reasoning && <MarkdownContent content={reasoning} />}
+    />
+  );
 };
 
 export const requiresPermission = true;

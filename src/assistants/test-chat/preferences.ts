@@ -6,6 +6,7 @@ const suggestedPrompts = [
 ];
 
 const preferences: Preferences = {
+  assistantName: "Test Chat",
   getAssistantSystemPrompt: async () => testChatAssistantDescription,
   assistantDisplayInfo: "Assistant for testing qp.",
   suggestedPrompts,

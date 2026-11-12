@@ -1,104 +1,118 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { FunctionComponent, useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { InlineCode } from "@ui";
+import {
+  Children,
+  FunctionComponent,
+  isValidElement,
+  useMemo,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import ReactMarkdown, { type Components, type Options } from "react-markdown";
+import "katex/dist/katex.min.css";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vs as highlightStyle } from "react-syntax-highlighter/dist/esm/styles/prism";
+import Code from "./Code";
+import "./Transcript.css";
 
 interface MarkdownContentProps {
   content: string;
   doRehypeRaw?: boolean;
 }
 
+type Plugins = Options["rehypePlugins"];
+
+const REMARK_PLUGINS: Plugins = [remarkGfm, remarkMath];
+
+type CodeElementProps = { className?: string; children?: ReactNode };
+
+/** A fenced block arrives as pre > code; its language is in the code's class. */
+const codeOf = (children: ReactNode) => {
+  const child = Children.toArray(children)[0];
+  if (!isValidElement<CodeElementProps>(child)) return undefined;
+  return {
+    code: String(child.props.children ?? "").replace(/\n$/, ""),
+    language: /language-(\S+)/.exec(child.props.className ?? "")?.[1],
+  };
+};
+
+const end = (style?: CSSProperties) =>
+  style?.textAlign === "right" ? " ns-cell--number" : "";
+
+const COMPONENTS: Components = {
+  a: ({ href, title, children }) => (
+    <a href={href} title={title} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  ),
+  pre: ({ children }) => {
+    const block = codeOf(children);
+    return block ? (
+      <Code code={block.code} language={block.language} />
+    ) : (
+      <pre>{children}</pre>
+    );
+  },
+  code: ({ children }) => <InlineCode>{children}</InlineCode>,
+  // A paragraph holding only an image becomes a figure, captioned by its alt text.
+  p: ({ node, children }) => {
+    const only = node?.children.filter(
+      (c) => !(c.type === "text" && c.value.trim() === ""),
+    );
+    const image = only?.length === 1 ? only[0] : undefined;
+    if (image?.type !== "element" || image.tagName !== "img")
+      return <p>{children}</p>;
+    const alt = String(image.properties.alt ?? "");
+    return (
+      <figure className="chat-figure">
+        <img src={String(image.properties.src ?? "")} alt={alt} />
+        {alt && <figcaption>{alt}</figcaption>}
+      </figure>
+    );
+  },
+  table: ({ children }) => (
+    <div
+      className="ns-table-scroll"
+      role="region"
+      aria-label="Table"
+      tabIndex={0}
+    >
+      <table className="ns-table ns-table--compact">{children}</table>
+    </div>
+  ),
+  // GFM's right-aligned columns hold numbers.
+  th: ({ children, style }) => (
+    <th scope="col" className={`ns-table-head${end(style)}`}>
+      {children}
+    </th>
+  ),
+  td: ({ children, style }) => (
+    <td className={end(style) ? "ns-cell--number" : "ns-cell--text"}>
+      {children}
+    </td>
+  ),
+};
+
+/** Markdown in the system's type: library tables, code blocks and inline code. */
 const MarkdownContent: FunctionComponent<MarkdownContentProps> = ({
   content,
   doRehypeRaw,
 }) => {
-  const rehypePlugins = useMemo(() => {
-    const plugins: any[] = [rehypeKatex];
-    if (doRehypeRaw) {
-      plugins.push(rehypeRaw);
-    }
-    return plugins;
-  }, [doRehypeRaw]);
-  const remarkPlugins = useMemo(() => {
-    const plugins: any[] = [remarkGfm, remarkMath];
-    return plugins;
-  }, []);
+  const rehypePlugins = useMemo<Plugins>(
+    () => (doRehypeRaw ? [rehypeKatex, rehypeRaw] : [rehypeKatex]),
+    [doRehypeRaw],
+  );
   return (
-    <ReactMarkdown
-      remarkPlugins={remarkPlugins}
-      rehypePlugins={rehypePlugins}
-      components={{
-        a({ children, ...props }) {
-          return (
-            <a
-              href={props.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              {...props}
-            >
-              {children}
-            </a>
-          );
-        },
-        code(props) {
-          const { children, className, ...rest } = props;
-          const match = /language-(\w+)/.exec(className || "");
-          const code = String(children).replace(/\n$/, "");
-
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const [copied, setCopied] = useState(false);
-
-          const handleCopy = () => {
-            navigator.clipboard.writeText(code);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-          };
-
-          return match ? (
-            <div style={{ position: "relative" }}>
-              <SyntaxHighlighter
-                PreTag="div"
-                children={code}
-                language={match[1]}
-                style={highlightStyle}
-              />
-              <button
-                onClick={handleCopy}
-                style={{
-                  color: "black",
-                  position: "absolute",
-                  right: "8px",
-                  bottom: "24px",
-                  padding: "4px 8px",
-                  fontSize: "12px",
-                  background: "#f5f5f5",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                {copied ? "Copied!" : "Copy"}
-              </button>
-            </div>
-          ) : (
-            <code
-              {...rest}
-              className={className}
-              style={{ background: "#eee" }}
-            >
-              {children}
-            </code>
-          );
-        },
-      }}
-    >
-      {content}
-    </ReactMarkdown>
+    <div className="chat-markdown">
+      <ReactMarkdown
+        remarkPlugins={REMARK_PLUGINS}
+        rehypePlugins={rehypePlugins}
+        components={COMPONENTS}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 };
 

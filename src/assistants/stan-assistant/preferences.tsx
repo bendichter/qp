@@ -48,6 +48,7 @@ const AssistantDisplayInfo = () => {
 };
 
 const preferences: Preferences = {
+  assistantName: "Stan Assistant",
   getAssistantSystemPrompt: async () => stanAssistantSystemPrompt,
   assistantDisplayInfo: <AssistantDisplayInfo />,
   suggestedPrompts: [

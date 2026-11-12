@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
 import { ORToolCall } from "../../../qpcommon/completion/openRouterTypes";
 import { ChatMessage, QPFunctionDescription } from "../../../qpcommon/types";
 import { JobRunnerClient } from "./jobRunnerClient";
-import MarkdownContent from "../../../qpcommon/components/MarkdownContent";
+import ToolCall from "../../../qpcommon/components/ToolCall";
 
 export const toolFunction: QPFunctionDescription = {
   name: "execute_javascript",
@@ -64,77 +63,18 @@ export const getDetailedDescription = async () => {
 
 export const requiresPermission = false;
 
-// eslint-disable-next-line react-refresh/only-export-components
-const ExecuteJavaScriptToolCallView = ({
-  toolCall,
-  toolOutput,
-}: {
-  toolCall: ORToolCall;
-  toolOutput: (ChatMessage & { role: "tool" }) | undefined;
-}): React.JSX.Element => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  // Parse the script from tool call arguments
-  const args = JSON.parse(toolCall.function.arguments || "{}");
-  const script: string = args.script || "";
-
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
-
-  if (!toolOutput) {
-    return (
-      <div className="tool-call-message">
-        <div style={{ cursor: "pointer" }} onClick={toggleExpand}>
-          <span style={{ marginRight: "8px" }}>{isExpanded ? "▼" : "▶"}</span>
-          Executing script...
-        </div>
-        {isExpanded && script && (
-          <div style={{ marginTop: "8px" }}>
-            <MarkdownContent content={`\`\`\`javascript\n${script}\n\`\`\``} />
-          </div>
-        )}
-      </div>
-    );
-  } else {
-    const output = toolOutput.content || "";
-    return (
-      <div className="tool-call-message">
-        <div style={{ cursor: "pointer" }} onClick={toggleExpand}>
-          <span style={{ marginRight: "8px" }}>{isExpanded ? "▼" : "▶"}</span>
-          Executed script.
-        </div>
-        {isExpanded && (
-          <div style={{ marginTop: "8px" }}>
-            {script && (
-              <div>
-                <strong>Script:</strong>
-                <MarkdownContent
-                  content={`\`\`\`javascript\n${script}\n\`\`\``}
-                />
-              </div>
-            )}
-            {output && (
-              <div style={{ marginTop: "12px" }}>
-                <strong>Output:</strong>
-                <MarkdownContent content={`\`\`\`\n${output}\n\`\`\``} />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-};
-
 export const createToolCallView = (
   toolCall: ORToolCall,
   toolOutput: (ChatMessage & { role: "tool" }) | undefined,
 ): React.JSX.Element => {
+  const args = JSON.parse(toolCall.function.arguments || "{}");
   return (
-    <ExecuteJavaScriptToolCallView
-      toolCall={toolCall}
-      toolOutput={toolOutput}
+    <ToolCall
+      kind="script"
+      toolName={toolCall.function.name}
+      input={args.script || ""}
+      inputLanguage="javascript"
+      output={toolOutput ? toolOutput.content : undefined}
     />
   );
 };

@@ -13,8 +13,17 @@ type MainWindowProps = {
 };
 
 export type Preferences = {
+  assistantName: string;
   getAssistantSystemPrompt: () => Promise<string>;
   assistantDisplayInfo: any;
+  /** The new chat's title; "Ask {assistantName}" when unset. */
+  emptyStateTitle?: string;
+  /** One line under the new chat's title. */
+  emptyStateLead?: string;
+  /** An image in public/ shown before the assistant's name. */
+  logo?: string;
+  /** A link back to the app that opened this assistant, first in the top bar. */
+  backLink?: { label: string; href: string };
   suggestedPrompts: string[];
   requiresJupyter: boolean;
 };
@@ -67,8 +76,6 @@ const MainWindow: FunctionComponent<MainWindowProps> = ({
           >
             <ChatPage
               key="new-chat" // Force remount when switching to new chat
-              width={windowDimensions.width}
-              height={windowDimensions.height}
               chatId=""
               getTools={getTools}
               preferences={preferences}
@@ -85,8 +92,6 @@ const MainWindow: FunctionComponent<MainWindowProps> = ({
           >
             <ChatPage
               key={chatId} // Force remount when switching chats
-              width={windowDimensions.width}
-              height={windowDimensions.height}
               chatId={chatId || ""}
               getTools={getTools}
               preferences={preferences}
